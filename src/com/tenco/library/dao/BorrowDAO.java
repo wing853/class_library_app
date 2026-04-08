@@ -87,7 +87,18 @@ public class BorrowDAO {
     public List<Borrow> getBorrowedBooks() throws SQLException {
         List<Borrow> borrowList = new ArrayList<>();
         String sql = """
-                SELECT * FROM borrows WHERE return_date IS NULL ORDER BY borrow_date
+                 SELECT
+                    br.id,
+                    br.student_id,
+                    s.name,
+                    br.book_id,
+                    b.title,
+                    br.borrow_date
+                    FROM borrows br
+                    JOIN books b ON br.book_id = b.id
+                    JOIN students s ON br.student_id = s.id
+                    WHERE br.return_date IS NULL
+                    ORDER BY br.borrow_date;
                 """;
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -99,6 +110,8 @@ public class BorrowDAO {
                         .bookId(rs.getInt("book_id"))
                         .studentId(rs.getInt("student_id"))
                         // rs.getDat() --> toLocalDate() --> LocalDate 변환됨
+                        .title(rs.getString("title"))
+                        .name(rs.getString("name"))
                         .borrowDate(
                                 rs.getDate("borrow_date") != null
                                         ? rs.getDate("borrow_date").toLocalDate()
