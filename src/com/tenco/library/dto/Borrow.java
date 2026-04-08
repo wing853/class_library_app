@@ -15,6 +15,8 @@ public class Borrow {
     private int id;
     private int bookId;
     private int studentId;
+    private String name;
+    private String title;
     private LocalDate borrowDate;
     private LocalDate returnDate;
 }

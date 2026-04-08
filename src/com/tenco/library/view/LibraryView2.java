@@ -145,25 +145,11 @@ public class LibraryView2 {
 
 
         for (Borrow br : borrowList) {
-            String name = "";
-            String title = "";
-            for (Student s : studentList){
-                if(br.getStudentId() == s.getId()){
-                    name = s.getName();
-                    break;
-                }
-            }
-
-            for (Book b : bookList) {
-                if(br.getBookId() == b.getId()){
-                    title = b.getTitle();
-                }
-            }
 
             System.out.printf("%d - 학생이름: %-15s | 책제목 : %-15s | 대출일: %-30s",
                     index,
-                    name,
-                    title,
+                    br.getName(),
+                    br.getTitle(),
                     br.getBorrowDate()
             );
             index++;
