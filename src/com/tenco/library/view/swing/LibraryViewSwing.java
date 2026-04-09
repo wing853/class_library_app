@@ -24,7 +24,6 @@ public class LibraryViewSwing extends JFrame {
     private DefaultTableModel tableModel;
     private JTextField loginField;
 
-    // 🎨 컬러 시스템
     private final Color PRIMARY = new Color(52, 152, 219);
     private final Color DARK = new Color(44, 62, 80);
     private final Color LIGHT = new Color(245, 245, 245);
@@ -42,7 +41,7 @@ public class LibraryViewSwing extends JFrame {
         add(createBottom(), BorderLayout.SOUTH);
     }
 
-    // 🔷 헤더 (앱 스타일)
+    // ===== 헤더 =====
     private JPanel createHeader() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(DARK);
@@ -80,24 +79,22 @@ public class LibraryViewSwing extends JFrame {
         return panel;
     }
 
-    // 🔷 중앙 테이블
+    // ===== 중앙 =====
     private JPanel createCenter() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(LIGHT);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         tableModel = new DefaultTableModel();
         table = new JTable(tableModel);
 
         table.setRowHeight(28);
         table.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
-        table.getTableHeader().setFont(new Font("맑은 고딕", Font.BOLD, 14));
 
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         return panel;
     }
 
-    // 🔷 하단 버튼
+    // ===== 하단 =====
     private JPanel createBottom() {
         JPanel panel = new JPanel(new GridLayout(2, 4, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -115,18 +112,17 @@ public class LibraryViewSwing extends JFrame {
         return panel;
     }
 
-    // 🎯 버튼 스타일 + hover
+    // ===== 버튼 스타일 =====
     private JButton createButton(String text, Color color) {
         JButton btn = new JButton(text);
-        btn.setFocusPainted(false);
         btn.setForeground(Color.WHITE);
         btn.setBackground(color);
+        btn.setFocusPainted(false);
 
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
                 btn.setBackground(color.darker());
             }
-
             public void mouseExited(MouseEvent e) {
                 btn.setBackground(color);
             }
@@ -141,6 +137,7 @@ public class LibraryViewSwing extends JFrame {
         panel.add(btn);
     }
 
+    // ===== 상태 =====
     private void updateLoginLabel() {
         if (currentAdminId != null) {
             loginLabel.setText("관리자: " + currentAdminName);
@@ -151,9 +148,20 @@ public class LibraryViewSwing extends JFrame {
         }
     }
 
+    // ===== 로그인 =====
     private void studentLogin() {
         try {
+            if (currentStudentId != null || currentAdminId != null) {
+                JOptionPane.showMessageDialog(this, "이미 로그인 상태");
+                return;
+            }
+
             String id = loginField.getText().trim();
+            if (id.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "학번 입력");
+                return;
+            }
+
             Student s = service.authenticateStudent(id);
 
             if (s != null) {
@@ -161,33 +169,53 @@ public class LibraryViewSwing extends JFrame {
                 currentStudentName = s.getName();
                 updateLoginLabel();
                 loginField.setText("");
-            } else JOptionPane.showMessageDialog(this, "로그인 실패");
+            } else {
+                JOptionPane.showMessageDialog(this, "로그인 실패");
+            }
         } catch (Exception e) { showError(e); }
     }
 
     private void adminLogin() {
         try {
-            String id = loginField.getText();
+            if (currentStudentId != null || currentAdminId != null) {
+                JOptionPane.showMessageDialog(this, "이미 로그인 상태");
+                return;
+            }
+
+            String id = loginField.getText().trim();
             String pw = JOptionPane.showInputDialog(this, "비밀번호");
 
             Admin a = service.authenticateAdmin(id, pw);
+
             if (a != null) {
                 currentAdminId = a.getId();
                 currentAdminName = a.getName();
                 updateLoginLabel();
                 loginField.setText("");
-            } else JOptionPane.showMessageDialog(this, "로그인 실패");
+            } else {
+                JOptionPane.showMessageDialog(this, "로그인 실패");
+            }
         } catch (Exception e) { showError(e); }
     }
 
     private void logout() {
+        if (currentStudentId == null && currentAdminId == null) {
+            JOptionPane.showMessageDialog(this, "로그인 상태 아님");
+            return;
+        }
+
+        String name = (currentStudentId != null) ? currentStudentName : currentAdminName;
+
         currentStudentId = null;
         currentAdminId = null;
         currentStudentName = null;
         currentAdminName = null;
+
         updateLoginLabel();
+        JOptionPane.showMessageDialog(this, name + "님 로그아웃");
     }
 
+    // ===== 기능 =====
     private void setTable(String... cols) {
         tableModel.setColumnIdentifiers(cols);
         tableModel.setRowCount(0);
@@ -210,6 +238,7 @@ public class LibraryViewSwing extends JFrame {
             JOptionPane.showMessageDialog(this,"관리자만 가능");
             return;
         }
+
         JTextField t = new JTextField();
         JTextField a = new JTextField();
 
@@ -237,6 +266,11 @@ public class LibraryViewSwing extends JFrame {
     }
 
     private void listStudents() {
+        if (currentAdminId == null) {
+            JOptionPane.showMessageDialog(this,"관리자만 조회 가능");
+            return;
+        }
+
         try {
             setTable("ID","이름","학번");
             for (Student s : service.getAllStudents()) {
@@ -246,6 +280,11 @@ public class LibraryViewSwing extends JFrame {
     }
 
     private void addStudent() {
+        if (currentAdminId == null) {
+            JOptionPane.showMessageDialog(this,"관리자만 등록 가능");
+            return;
+        }
+
         JTextField n = new JTextField();
         JTextField id = new JTextField();
 
@@ -260,18 +299,29 @@ public class LibraryViewSwing extends JFrame {
         }
     }
 
+    // 🔥 대출 (상태 체크 포함)
     private void borrowBook() {
         if (currentStudentId == null) {
             JOptionPane.showMessageDialog(this,"학생 로그인 필요");
             return;
         }
+
         int row = table.getSelectedRow();
         if (row == -1) return;
 
         try {
+            String status = (String) tableModel.getValueAt(row, 3);
+            if ("대출중".equals(status)) {
+                JOptionPane.showMessageDialog(this, "이미 대출중인 도서");
+                return;
+            }
+
             int id = (int) tableModel.getValueAt(row,0);
             service.borrowBook(id,currentStudentId);
+
+            JOptionPane.showMessageDialog(this,"대출 완료");
             listBooks();
+
         } catch (Exception e){ showError(e); }
     }
 
@@ -286,8 +336,12 @@ public class LibraryViewSwing extends JFrame {
         } catch (Exception e){ showError(e); }
     }
 
+    // 🔥 반납 (본인만 가능)
     private void returnBook() {
-        if (currentStudentId == null) return;
+        if (currentStudentId == null) {
+            JOptionPane.showMessageDialog(this,"학생 로그인 필요");
+            return;
+        }
 
         int row = table.getSelectedRow();
         if (row == -1) return;
@@ -295,8 +349,17 @@ public class LibraryViewSwing extends JFrame {
         try {
             List<Borrow> list = service.getBorrowedBooks();
             Borrow b = list.get(row);
+
+            if (!(b.getStudentId() == currentStudentId)) {
+                JOptionPane.showMessageDialog(this,"본인만 반납 가능");
+                return;
+            }
+
             service.returnBook(b.getBookId(), b.getStudentId());
+
+            JOptionPane.showMessageDialog(this,"반납 완료");
             listBorrowedBooks();
+
         } catch (Exception e){ showError(e); }
     }
 

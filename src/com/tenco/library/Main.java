@@ -9,11 +9,11 @@ public class Main {
 
     // 프로그램 시작점
     public static void main(String[] args) {
-        LibraryView libraryView = new LibraryView();
-        libraryView.start();
-//        SwingUtilities.invokeLater(() -> {
-//            new LibraryViewSwing().setVisible(true);
-//        });
+//        LibraryView libraryView = new LibraryView();
+//        libraryView.start();
+        SwingUtilities.invokeLater(() -> {
+            new LibraryViewSwing().setVisible(true);
+        });
 
     }
 
